@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMB TRADERS | Quotation & Proforma Invoice</title>
+
+<style>
+:root {
+    --orange: #e87524;
+    --orange-dark: #c85b13;
+    --orange-light: #fff3e9;
+    --black: #242424;
+    --dark: #171717;
+    --text: #354052;
+    --muted: #687586;
+    --border: #dfe3e8;
+    --soft: #f7f8fa;
+    --white: #ffffff;
+    --green: #16834b;
+    --red: #d94343;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    margin: 0;
+    background: #f2f4f7;
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+}
+
+input, textarea, select, button { font: inherit; }
+button { cursor: pointer; }
+
+/* =================================
+   TOP HEADER
+================================= */
+.topbar {
+    background: linear-gradient(110deg, #171717, #333333);
+    color: var(--white);
+    min-height: 76px;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    border-bottom: 4px solid var(--orange);
+}
+.topbar h1 { margin: 0; font-size: 23px; font-weight: 900; letter-spacing: 2px; color: #fff; }
+.topbar p { margin: 5px 0 0; font-size: 11px; color: #e7e7e7; letter-spacing: .3px; }
+.topbar > div:last-child { color: #ffd3b3 !important; font-size: 11px !important; font-weight: 700; }
+
+/* =================================
+   APPLICATION LAYOUT
+================================= */
+.app { width: 100%; max-width: 1450px; margin: auto; padding: 20px 18px 35px; }
+.screen { display: none; }
+.screen.active { display: block; }
+
+.panel {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, .035);
+}
+.panel-heading {
+    color: var(--black);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--orange);
+    padding-bottom: 10px;
+    margin: 0 0 16px;
+}
+
+/* =================================
+   FORM FIELDS
+================================= */
+.form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px 15px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-size: 11px; color: #424b57; font-weight: 800; }
+.field input, .field textarea, .field select {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 11px;
+    border: 1px solid #d5dbe2;
+    border-radius: 6px;
+    outline: none;
+    background: #fff;
+    color: var(--black);
+    font-size: 12px;
+    transition: border-color .2s, box-shadow .2s;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px rgba(232, 117, 36, .10);
+}
+.field textarea { min-height: 76px; resize: vertical; }
+
+/* =================================
+   PRODUCT EDITOR
+================================= */
+.items-scroll { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: 6px; }
+.editor-table { width: 100%; min-width: 950px; border-collapse: collapse; }
+.editor-table th {
+    background: var(--black); color: white; font-size: 10px;
+    padding: 11px 7px; text-align: left; white-space: nowrap;
+}
+.editor-table td { border-bottom: 1px solid #e8ebef; padding: 6px; background: #fff; }
+.editor-table tbody tr:hover td { background: #fffaf6; }
+.editor-table input {
+    width: 100%; min-width: 55px; padding: 8px 6px;
+    border: 1px solid #d9dfe5; border-radius: 5px; font-size: 11px; color: var(--black);
+}
+.editor-table input:focus { outline: none; border-color: var(--orange); }
+.editor-table .desc-input { min-width: 180px; }
+.editor-amount { font-size: 11px; font-weight: 800; white-space: nowrap; color: var(--black); }
+.remove-btn {
+    background: #fff0ee; color: #c52d27; border: 1px solid #f4c9c5;
+    border-radius: 5px; padding: 7px 10px; font-weight: 900;
+}
+.remove-btn:hover { background: #d94343; color: white; }
+
+/* =================================
+   BUTTONS
+================================= */
+.btn { border: 0; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 800; transition: .2s ease; }
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: var(--orange); color: white; }
+.btn-primary:hover { background: var(--orange-dark); }
+.btn-secondary { background: #eceff2; color: var(--black); }
+.btn-secondary:hover { background: #dfe4e9; }
+.btn-success { background: var(--green); color: white; }
+.btn-danger { background: #fff0ee; color: #c53030; }
+
+.actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.action-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.muted-note { color: var(--muted); font-size: 10px; line-height: 1.5; }
+
+/* =================================
+   PREVIEW TOOLBAR
+================================= */
+.preview-toolbar {
+    max-width: 748px;
+    margin: 0 auto 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.preview-toolbar h2 { color: var(--black); font-size: 18px; margin: 0; font-weight: 900; }
+
+/* =================================
+   INVOICE PAGE  (exact A4 usable area: 198mm x 283mm)
+   Same layout on screen, print and PDF.
+================================= */
+.invoice-pages { width: 100%; }
+
+.invoice-page {
+    width: 198mm;
+    height: 283mm;
+    margin: 0 auto 18px;
+    padding: 4mm 4.5mm 3.5mm;
+    background: white;
+    border: 1px solid #cfd5db;
+    box-shadow: 0 5px 22px rgba(0, 0, 0, .07);
+    color: #252525;
+    font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+.invoice-page > * { flex-shrink: 0; }
+
+/* ---------- COMPANY HEADER ---------- */
+.company-header {
+    display: grid;
+    grid-template-columns: 118px minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    border-bottom: 3px solid var(--orange);
+    padding: 2px 4px 10px;
+}
+.company-logo { width: 116px; height: 80px; object-fit: contain; object-position: center; }
+.company-heading { text-align: center; min-width: 0; }
+.company-heading h2 {
+    margin: 0 0 4px; color: var(--black); font-size: 30px;
+    font-weight: 900; letter-spacing: 3px; text-transform: uppercase;
+}
+.company-heading .tagline {
+    color: var(--orange-dark); font-size: 10px; font-weight: 900;
+    letter-spacing: 2px; margin-bottom: 6px;
+}
+.company-heading p { color: #3d4651; font-size: 9.5px; line-height: 1.5; margin: 2px 0; overflow-wrap: anywhere; }
+.company-heading p:first-of-type { font-weight: 800; color: #252525; }
+
+/* ---------- DEALER LOGOS: 9 EQUAL BOXES IN ONE LINE ---------- */
+.dealer-row {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 5px;
+    width: 100%;
+    padding: 8px 0;
+    border-bottom: 1px solid #dce1e6;
+}
+.dealer-logo-box {
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #e3e7ec;
+    border-radius: 4px;
+    padding: 4px 5px;
+    overflow: hidden;
+}
+.dealer-logo-box img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    mix-blend-mode: multiply;
+}
+
+/* Third dealer logo (Alko Plus) – slightly larger and visually balanced */
+.dealer-logo-box:nth-child(3) {
+    padding: 2px;
+    background: #fff;
+}
+.dealer-logo-box:nth-child(3) img {
+    transform: scale(1.48);
+}
+
+/* ---------- DOCUMENT TITLE ---------- */
+.document-title {
+    text-align: center; color: var(--black); font-size: 17px; font-weight: 900;
+    letter-spacing: 2.5px; padding: 8px 5px 6px; margin: 0; text-transform: uppercase;
+}
+.document-subtitle { text-align: center; color: #727b85; font-size: 9px; margin: 0 0 8px; }
+
+/* ---------- DOCUMENT META ---------- */
+.doc-meta { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #d5dbe1; margin-bottom: 8px; }
+.meta-cell { padding: 7px 10px; font-size: 10px; border-bottom: 1px solid #e1e5e9; line-height: 1.4; }
+.meta-cell:nth-child(odd) { border-right: 1px solid #e1e5e9; }
+.meta-cell:nth-last-child(-n+2) { border-bottom: 0; }
+.meta-cell strong { color: var(--orange-dark); }
+
+/* ---------- CUSTOMER DETAILS ---------- */
+.party-heading { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+.party-card { border: 1px solid #d5dbe1; border-radius: 4px; overflow: hidden; }
+.party-card-title {
+    background: #292929; color: white; padding: 7px 10px; font-size: 9.5px;
+    font-weight: 900; letter-spacing: .6px; border-left: 3px solid var(--orange);
+}
+.party-card-body { padding: 8px 10px; min-height: 78px; font-size: 10px; line-height: 1.55; overflow-wrap: anywhere; }
+.party-name { color: var(--orange-dark); font-size: 12.5px; font-weight: 900; margin-bottom: 3px; }
+.party-detail-line strong { color: #343a40; }
+
+/* ---------- PRODUCT TABLE (stretches to fill the page) ---------- */
+.invoice-page > .table-area {
+    flex: 1 1 auto;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    margin-top: 6px;
+}
+.product-table { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
+.product-table thead { display: table-header-group; }
+.product-table th {
+    background: #292929; color: white; border: 1px solid #292929;
+    border-bottom: 2px solid var(--orange); padding: 8px 3px;
+    text-align: center; font-size: 9.5px; line-height: 1.25; height: 30px;
+}
+.product-table td {
+    border: 1px solid #d5dbe1; padding: 6px 6px; font-size: 10.5px;
+    line-height: 1.35; vertical-align: middle; overflow-wrap: anywhere;
+}
+.product-table tbody tr:nth-child(even) td { background: #fafafa; }
+.product-table td.center { text-align: center; }
+.product-table td.right { text-align: right; }
+.product-table td.description { font-weight: 700; color: #303030; }
+
+.page-item-count { text-align: right; color: #7a838d; font-size: 8.5px; margin: 4px 1px 6px; }
+
+/* ---------- FINAL SUMMARY ---------- */
+.final-section { margin-top: 0; }
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: stretch; }
+.amount-words {
+    border: 1px solid #d5dbe1; border-left: 3px solid var(--orange);
+    padding: 10px 12px; border-radius: 3px; font-size: 11px; line-height: 1.5;
+}
+.amount-words strong { display: block; color: var(--orange-dark); margin-bottom: 6px; font-size: 10px; letter-spacing: .5px; }
+.totals-table { width: 100%; border-collapse: collapse; }
+.totals-table td { border: 1px solid #d5dbe1; padding: 6px 9px; font-size: 10.5px; }
+.totals-table td:last-child { text-align: right; font-weight: 800; white-space: nowrap; }
+.totals-table .grand-total td {
+    background: #292929; color: white; border-color: #292929;
+    border-top: 2px solid var(--orange); font-weight: 900; font-size: 12px;
+}
+
+/* ---------- TERMS | BANK + QR | SIGNATURE ---------- */
+.bottom-grid { display: grid; grid-template-columns: 1.05fr 1.05fr .9fr; gap: 8px; margin-top: 8px; align-items: stretch; }
+.bottom-card { border: 1px solid #d5dbe1; border-radius: 4px; padding: 9px 10px; min-width: 0; }
+.bottom-title {
+    color: var(--orange-dark); font-size: 10px; font-weight: 900; letter-spacing: .5px;
+    text-transform: uppercase; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #f0d2bd;
+}
+.terms-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 9.5px; line-height: 1.55; }
+.bank-details { font-size: 10px; line-height: 1.6; overflow-wrap: anywhere; }
+.bank-details strong { color: #303030; }
+
+.payment-row { display: flex; align-items: center; gap: 9px; border-top: 1px solid #e2e5e8; padding-top: 8px; margin-top: 8px; }
+.payment-row img { width: 78px; height: 78px; object-fit: contain; border: 1px solid #e1e6ec; padding: 2px; flex: 0 0 78px; }
+.payment-text { font-size: 8.5px; line-height: 1.45; }
+.payment-text strong { color: var(--orange-dark); font-size: 10px; }
+
+.signature-card {
+    display: flex; flex-direction: column; justify-content: space-between;
+    align-items: center; text-align: center;
+}
+.signature-card .for-company { color: #292929; font-size: 11px; font-weight: 900; }
+.signature-card .sign-box { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; padding: 4px 0; }
+.signature-card img { max-width: 100%; max-height: 120px; width: auto; height: auto; object-fit: contain; }
+.signature-card .sign-label {
+    width: 100%; border-top: 1px solid #929ba4; padding-top: 5px;
+    font-size: 9px; font-weight: 900; color: var(--black);
+}
+
+/* ---------- FOOTER ---------- */
+.invoice-footer {
+    text-align: center; font-size: 8.5px; color: #737b84;
+    border-top: 1px solid #dce1e6; padding-top: 5px; margin-top: 8px;
+}
+
+/* =================================
+   MOBILE (editor only – invoice is scaled by script)
+================================= */
+@media (max-width: 900px) {
+    .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+    .topbar { padding: 14px 16px; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .topbar h1 { font-size: 20px; }
+    .app { padding: 13px 9px 25px; }
+    .panel { padding: 14px; margin-bottom: 12px; }
+    .panel-heading { font-size: 12px; }
+    .form-grid { grid-template-columns: 1fr; gap: 11px; }
+    .field.full { grid-column: auto; }
+    .actions { align-items: stretch; }
+    .action-group { width: 100%; }
+    .action-group .btn { flex: 1; }
+    .preview-toolbar { align-items: flex-start; }
+}
+
+/* =================================
+   A4 PRINT / SAVE PDF
+================================= */
+@page { size: A4 portrait; margin: 6mm; }
+
+@media print {
+    html, body {
+        width: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .topbar, .no-print, #editorScreen { display: none !important; }
+
+    #previewScreen, #previewScreen.active { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+    .app { width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
+    .invoice-pages { width: 100% !important; zoom: 1 !important; }
+
+    .invoice-page {
+        width: 198mm !important;
+        height: 283mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: 1px solid #cfd5db !important;
+        break-after: page;
+        page-break-after: always;
+    }
+    .invoice-page:last-child { break-after: auto; page-break-after: auto; }
+
+    .product-table tr, .party-heading, .summary-grid, .bottom-grid, .bottom-card, .totals-table tr {
+        break-inside: avoid; page-break-inside: avoid;
+    }
+    img { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <div>
+        <h1>SMB TRADERS</h1>
+        <p>Quotation & Proforma Invoice Management</p>
+    </div>
+    <div style="font-size:11px;color:#dceafa">Professional Document Generator</div>
+</header>
+
+<main class="app">
+
+<!-- ================= EDITOR ================= -->
+
+<section id="editorScreen" class="screen active">
+
+    <div class="panel">
+        <h3 class="panel-heading">Document Information</h3>
+        <div class="form-grid">
+            <div class="field">
+                <label>Document Type</label>
+                <select id="documentType">
+                    <option value="QUOTATION">Quotation</option>
+                    <option value="PROFORMA INVOICE">Proforma Invoice</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Document Number</label>
+                <input id="documentNumber" type="text" placeholder="Enter document number">
+            </div>
+            <div class="field">
+                <label>Document Date</label>
+                <input id="documentDate" type="date">
+            </div>
+            <div class="field">
+                <label>Place of Supply</label>
+                <input id="placeOfSupply" type="text" placeholder="Enter place of supply">
+            </div>
+            <div class="field">
+                <label>GST Calculation</label>
+                <select id="gstMode">
+                    <option value="split">CGST + SGST</option>
+                    <option value="igst">IGST</option>
+                    <option value="none">No GST</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3 class="panel-heading">Customer / Party Information</h3>
+        <div class="form-grid">
+            <div class="field">
+                <label>Party / Customer Name *</label>
+                <input id="partyName" type="text" placeholder="Enter customer name">
+            </div>
+            <div class="field">
+                <label>Order By</label>
+                <input id="orderBy" type="text" placeholder="Enter order by name">
+            </div>
+            <div class="field">
+                <label>Customer GSTIN</label>
+                <input id="partyGSTIN" type="text" placeholder="Enter GSTIN">
+            </div>
+            <div class="field">
+                <label>State</label>
+                <input id="partyState" type="text" placeholder="Enter state">
+            </div>
+            <div class="field">
+                <label>State Code</label>
+                <input id="partyStateCode" type="text" placeholder="Enter state code">
+            </div>
+            <div class="field">
+                <label>Contact Number</label>
+                <input id="partyPhone" type="text" placeholder="Enter phone number">
+            </div>
+            <div class="field">
+                <label>Email</label>
+                <input id="partyEmail" type="email" placeholder="Enter email">
+            </div>
+            <div class="field full">
+                <label>Customer Address</label>
+                <textarea id="partyAddress" placeholder="Enter complete customer address"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3 class="panel-heading">Product / Item Details</h3>
+
+        <div class="items-scroll">
+            <table class="editor-table">
+                <thead>
+                    <tr>
+                        <th style="width:45px">S.No.</th>
+                        <th>Description</th>
+                        <th style="width:90px">HSN</th>
+                        <th style="width:75px">Qty</th>
+                        <th style="width:95px">Rate</th>
+                        <th style="width:75px">Unit</th>
+                        <th style="width:80px">Disc %</th>
+                        <th style="width:80px">GST %</th>
+                        <th style="width:110px">Amount</th>
+                        <th style="width:55px">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="itemEditorBody"></tbody>
+            </table>
+        </div>
+
+        <div class="actions">
+            <div class="action-group">
+                <button type="button" class="btn btn-secondary" onclick="addItem()">+ Add Product</button>
+            </div>
+            <span class="muted-note">Five products are arranged per printed A4 page.</span>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3 class="panel-heading">Terms & Conditions</h3>
+        <div class="field">
+            <label>Custom Terms & Conditions</label>
+            <textarea id="termsInput" rows="5">1. Goods once sold will not be taken back.
+2. Payment should be made as per agreed terms.
+3. Prices are subject to applicable taxes.
+4. Delivery will be as mutually agreed.
+5. Subject to Bangalore jurisdiction.</textarea>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3 class="panel-heading">Amount Summary</h3>
+        <div class="form-grid">
+            <div class="field"><label>Gross Amount</label><input id="editorGross" readonly value="₹ 0.00"></div>
+            <div class="field"><label>Total Discount</label><input id="editorDiscount" readonly value="₹ 0.00"></div>
+            <div class="field"><label>Taxable Amount</label><input id="editorTaxable" readonly value="₹ 0.00"></div>
+            <div class="field"><label>Total GST</label><input id="editorGST" readonly value="₹ 0.00"></div>
+            <div class="field"><label>Grand Total</label><input id="editorGrand" readonly value="₹ 0.00"></div>
+        </div>
+
+        <div class="actions">
+            <div class="action-group">
+                <button type="button" class="btn btn-danger" onclick="resetForm()">Reset Form</button>
+            </div>
+            <div class="action-group">
+                <button type="button" class="btn btn-primary" onclick="generatePreview()">
+                    Generate Document & Preview →
+                </button>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<!-- ================= PREVIEW ================= -->
+
+<section id="previewScreen" class="screen">
+
+    <div class="preview-toolbar no-print">
+        <h2>Document Preview</h2>
+        <div class="action-group">
+            <button class="btn btn-secondary" onclick="backToEditor()">← Edit Details</button>
+            <button class="btn btn-success" onclick="window.print()">Print / Save PDF</button>
+        </div>
+    </div>
+
+    <div id="invoicePages" class="invoice-pages"></div>
+
+    <div class="preview-toolbar no-print" style="margin-top:16px">
+        <button class="btn btn-secondary" onclick="backToEditor()">← Back to Edit</button>
+        <button class="btn btn-success" onclick="window.print()">Print / Save PDF</button>
+    </div>
+
+</section>
+
+</main>
+
+<script>
+/* ================================================
+   PERMANENT SMB TRADERS COMPANY DETAILS
+================================================ */
+
+const COMPANY = {
+    name: "SMB TRADERS",
+    address: "72/7,B OOSMAN KHAN ROAD DOOL DOOL COMPLEX,BEHIND N R ROAD,NEAR CANARA BANK BANGALORE",
+    state: "KARNATAKA",
+    stateCode: "29",
+    phone: "080-42108178",
+    mobile1: "9972812052",
+    mobile2: "6362767364",
+    email: "SMBTRADERS52@GMAIL.COM",
+    gstin: "29ABMFS5846D1ZQ",
+
+    bank: {
+        holder: "S  M B TRADERS",
+        name: "KOTAK MAHINDRA BANK",
+        account: "5811778025",
+        branch: "NARASIMHARAJA ROAD",
+        ifsc: "KKBK0008038"
+    }
+};
+
+const ITEMS_PER_PAGE = 5;
+
+const $ = id => document.getElementById(id);
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+    })[char]);
+}
+
+function money(value) {
+    return Number(value || 0).toLocaleString("en-IN", {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+    });
+}
+
+function formatDate(value) {
+    if (!value) return "—";
+    const date = new Date(value + "T00:00:00");
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+}
+
+/* ================================================
+   AMOUNT IN WORDS
+================================================ */
+
+function numberToWords(number) {
+    number = Math.round(Number(number) || 0);
+    if (number === 0) return "Zero Rupees Only";
+
+    const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+        "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+    const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+    function underThousand(n) {
+        let output = "";
+        if (n >= 100) { output += ones[Math.floor(n / 100)] + " Hundred "; n %= 100; }
+        if (n >= 20) { output += tens[Math.floor(n / 10)] + " "; n %= 10; }
+        if (n > 0) output += ones[n] + " ";
+        return output;
+    }
+
+    let result = "";
+    const crore = Math.floor(number / 10000000); number %= 10000000;
+    const lakh = Math.floor(number / 100000); number %= 100000;
+    const thousand = Math.floor(number / 1000); number %= 1000;
+
+    if (crore) result += underThousand(crore) + "Crore ";
+    if (lakh) result += underThousand(lakh) + "Lakh ";
+    if (thousand) result += underThousand(thousand) + "Thousand ";
+    if (number) result += underThousand(number);
+
+    return result.trim() + " Rupees Only";
+}
+
+/* ================================================
+   PRODUCT ROWS
+================================================ */
+
+let itemCounter = 0;
+
+function addItem(data = {}) {
+    itemCounter++;
+
+    const row = document.createElement("tr");
+    row.className = "item-row";
+
+    row.innerHTML = `
+        <td class="row-number">${itemCounter}</td>
+        <td><input class="item-description desc-input" placeholder="Product description" value="${escapeHTML(data.description || "")}"></td>
+        <td><input class="item-hsn" placeholder="HSN" value="${escapeHTML(data.hsn || "")}"></td>
+        <td><input class="item-qty" type="number" min="0" step="any" value="${data.qty ?? 1}"></td>
+        <td><input class="item-rate" type="number" min="0" step="any" value="${data.rate ?? 0}"></td>
+        <td><input class="item-unit" placeholder="Nos" value="${escapeHTML(data.unit || "Nos")}"></td>
+        <td><input class="item-discount" type="number" min="0" max="100" step="any" value="${data.discount ?? 0}"></td>
+        <td><input class="item-gst" type="number" min="0" max="100" step="any" value="${data.gst ?? 18}"></td>
+        <td class="editor-amount">₹ 0.00</td>
+        <td><button type="button" class="remove-btn" onclick="removeItem(this)">×</button></td>
+    `;
+
+    $("itemEditorBody").appendChild(row);
+
+    row.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", calculateTotals);
+    });
+
+    calculateTotals();
+}
+
+function removeItem(button) {
+    if (document.querySelectorAll(".item-row").length <= 1) {
+        alert("At least one product is required.");
+        return;
+    }
+    button.closest("tr").remove();
+    updateRowNumbers();
+    calculateTotals();
+}
+
+function updateRowNumbers() {
+    document.querySelectorAll(".item-row").forEach((row,index) => {
+        row.querySelector(".row-number").textContent = index + 1;
+    });
+}
+
+/* ================================================
+   CALCULATIONS
+================================================ */
+
+function getItems() {
+    return [...document.querySelectorAll(".item-row")].map(row => {
+        const qty = Math.max(0, Number(row.querySelector(".item-qty").value) || 0);
+        const rate = Math.max(0, Number(row.querySelector(".item-rate").value) || 0);
+        const discountPercent = Math.min(100, Math.max(0, Number(row.querySelector(".item-discount").value) || 0));
+        const gstPercent = Math.max(0, Number(row.querySelector(".item-gst").value) || 0);
+
+        const gross = qty * rate;
+        const discount = gross * discountPercent / 100;
+        const taxable = gross - discount;
+        const gst = $("gstMode").value === "none" ? 0 : taxable * gstPercent / 100;
+        const amount = taxable + gst;
+
+        row.querySelector(".editor-amount").textContent = "₹ " + money(amount);
+
+        return {
+            description: row.querySelector(".item-description").value.trim(),
+            hsn: row.querySelector(".item-hsn").value.trim(),
+            qty, rate,
+            unit: row.querySelector(".item-unit").value.trim(),
+            discountPercent, gstPercent,
+            gross, discount, taxable, gst, amount
+        };
+    });
+}
+
+function calculateTotals() {
+    const items = getItems();
+
+    const totals = { gross:0, discount:0, taxable:0, gst:0, cgst:0, sgst:0, igst:0, grand:0 };
+
+    items.forEach(item => {
+        totals.gross += item.gross;
+        totals.discount += item.discount;
+        totals.taxable += item.taxable;
+        totals.gst += item.gst;
+    });
+
+    if ($("gstMode").value === "split") {
+        totals.cgst = totals.gst / 2;
+        totals.sgst = totals.gst / 2;
+    } else if ($("gstMode").value === "igst") {
+        totals.igst = totals.gst;
+    }
+
+    totals.grand = Math.round((totals.taxable + totals.gst) * 100) / 100;
+
+    $("editorGross").value = "₹ " + money(totals.gross);
+    $("editorDiscount").value = "₹ " + money(totals.discount);
+    $("editorTaxable").value = "₹ " + money(totals.taxable);
+    $("editorGST").value = "₹ " + money(totals.gst);
+    $("editorGrand").value = "₹ " + money(totals.grand);
+
+    return {items,totals};
+}
+
+/* ================================================
+   REUSABLE COMPANY HEADER
+================================================ */
+
+function companyHeaderHTML() {
+    return `
+        <div class="company-header">
+            <img class="company-logo" src="smb.jpg" alt="SMB TRADERS Logo">
+
+            <div class="company-heading">
+                <h2>SMB TRADERS</h2>
+                <div class="tagline">INDUSTRIAL & GENERAL TRADING</div>
+                <p>${escapeHTML(COMPANY.address)}</p>
+                <p>
+                    Phone: ${escapeHTML(COMPANY.phone)}
+                    &nbsp; | &nbsp; Mobile: ${escapeHTML(COMPANY.mobile1)}, ${escapeHTML(COMPANY.mobile2)}
+                </p>
+                <p>Email: ${escapeHTML(COMPANY.email)}</p>
+                <p>
+                    GSTIN: ${escapeHTML(COMPANY.gstin)}
+                    &nbsp; | &nbsp; State: ${escapeHTML(COMPANY.state)}
+                    &nbsp; | &nbsp; Code: ${escapeHTML(COMPANY.stateCode)}
+                </p>
+            </div>
+        </div>
+
+        <div class="dealer-row">
+            <div class="dealer-logo-box"><img src="3m.png" alt="3M"></div>
+            <div class="dealer-logo-box"><img src="agrason.png" alt="Agrason"></div>
+            <div class="dealer-logo-box"><img src="alko plus.jpg" alt="Alko Plus"></div>
+            <div class="dealer-logo-box"><img src="fuel.jpg" alt="Fuel"></div>
+            <div class="dealer-logo-box"><img src="glsita.jpg" alt="Glasita"></div>
+            <div class="dealer-logo-box"><img src="karam.png" alt="Karam"></div>
+            <div class="dealer-logo-box"><img src="qadar.png" alt="Qadar"></div>
+            <div class="dealer-logo-box"><img src="tiger.jpg" alt="Tiger"></div>
+            <div class="dealer-logo-box"><img src="udyagi.png" alt="Udyagi"></div>
+        </div>
+    `;
+}
+
+/* ================================================
+   DOCUMENT DETAILS
+================================================ */
+
+function documentDetailsHTML() {
+    return `
+        <div class="document-title">${escapeHTML($("documentType").value)}</div>
+        <div class="document-subtitle">Official business document issued by SMB TRADERS</div>
+
+        <div class="doc-meta">
+            <div class="meta-cell"><strong>Document No:</strong> ${escapeHTML($("documentNumber").value || "—")}</div>
+            <div class="meta-cell"><strong>Date:</strong> ${escapeHTML(formatDate($("documentDate").value))}</div>
+            <div class="meta-cell"><strong>Place of Supply:</strong> ${escapeHTML($("placeOfSupply").value || "—")}</div>
+            <div class="meta-cell"><strong>Company State:</strong> ${escapeHTML(COMPANY.state)} (${escapeHTML(COMPANY.stateCode)})</div>
+        </div>
+
+        <div class="party-heading">
+            <div class="party-card">
+                <div class="party-card-title">BILL TO / CUSTOMER DETAILS</div>
+                <div class="party-card-body">
+                    <div class="party-name">${escapeHTML($("partyName").value)}</div>
+                    <div>${escapeHTML($("partyAddress").value || "—")}</div>
+                    <div class="party-detail-line"><strong>Contact:</strong> ${escapeHTML($("partyPhone").value || "—")}</div>
+                    <div class="party-detail-line"><strong>Email:</strong> ${escapeHTML($("partyEmail").value || "—")}</div>
+                </div>
+            </div>
+
+            <div class="party-card">
+                <div class="party-card-title">ORDER & TAX DETAILS</div>
+                <div class="party-card-body">
+                    <div class="party-detail-line"><strong>Order By:</strong> ${escapeHTML($("orderBy").value || "—")}</div>
+                    <div class="party-detail-line"><strong>GSTIN:</strong> ${escapeHTML($("partyGSTIN").value || "—")}</div>
+                    <div class="party-detail-line"><strong>State:</strong> ${escapeHTML($("partyState").value || "—")}</div>
+                    <div class="party-detail-line"><strong>State Code:</strong> ${escapeHTML($("partyStateCode").value || "—")}</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/* ================================================
+   PRODUCT TABLE
+   Always 5 rows per page (empty rows fill the space
+   so the table stretches to the full page height).
+================================================ */
+
+function productTableHTML(items, startIndex) {
+    const gstOff = $("gstMode").value === "none";
+
+    const rows = items.map((item,index) => `
+        <tr>
+            <td class="center">${startIndex + index + 1}</td>
+            <td class="description">${escapeHTML(item.description || "—")}</td>
+            <td class="center">${escapeHTML(item.hsn || "—")}</td>
+            <td class="center">${money(item.qty).replace(".00","")}</td>
+            <td class="right">${money(item.rate)}</td>
+            <td class="center">${escapeHTML(item.unit || "—")}</td>
+            <td class="center">${money(item.discountPercent).replace(".00","")}%</td>
+            <td class="right">${money(item.taxable)}</td>
+        </tr>
+    `);
+
+    // empty filler rows so every page has an equal, full-height table
+    for (let i = items.length; i < ITEMS_PER_PAGE; i++) {
+        rows.push(`
+            <tr>
+                <td>&nbsp;</td><td></td><td></td><td></td>
+                <td></td><td></td><td></td><td></td>
+            </tr>
+        `);
+    }
+
+    return `
+        <div class="table-area">
+            <table class="product-table">
+                <colgroup>
+                    <col style="width:6%">
+                    <col style="width:34%">
+                    <col style="width:10%">
+                    <col style="width:8%">
+                    <col style="width:12%">
+                    <col style="width:8%">
+                    <col style="width:8%">
+                    <col style="width:14%">
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        <th>S.No.</th>
+                        <th>Description</th>
+                        <th>HSN</th>
+                        <th>Qty</th>
+                        <th>Rate</th>
+                        <th>Unit</th>
+                        <th>Disc %</th>
+                        <th>Taxable Amount (₹)</th>
+                    </tr>
+                </thead>
+
+                <tbody>${rows.join("")}</tbody>
+            </table>
+        </div>
+    `;
+}
+
+/* ================================================
+   FINAL PAGE: TOTALS / TERMS / BANK / QR / SIGNATURE
+   Added ONLY to the last page.
+================================================ */
+
+function finalSectionHTML(totals) {
+    let taxRows = "";
+
+    if ($("gstMode").value === "split") {
+        taxRows = `
+            <tr><td>CGST</td><td>₹ ${money(totals.cgst)}</td></tr>
+            <tr><td>SGST</td><td>₹ ${money(totals.sgst)}</td></tr>
+        `;
+    } else if ($("gstMode").value === "igst") {
+        taxRows = `<tr><td>IGST</td><td>₹ ${money(totals.igst)}</td></tr>`;
+    } else {
+        taxRows = `<tr><td>GST</td><td>₹ 0.00</td></tr>`;
+    }
+
+    return `
+        <div class="final-section">
+
+            <div class="summary-grid">
+                <div class="amount-words">
+                    <strong>AMOUNT IN WORDS</strong>
+                    ${escapeHTML(numberToWords(totals.grand))}
+                </div>
+
+                <table class="totals-table">
+                    <tr><td>Taxable Amount</td><td>₹ ${money(totals.taxable)}</td></tr>
+                    ${taxRows}
+                    <tr class="grand-total"><td>GRAND TOTAL</td><td>₹ ${money(totals.grand)}</td></tr>
+                </table>
+            </div>
+
+            <div class="bottom-grid">
+
+                <div class="bottom-card">
+                    <div class="bottom-title">Terms & Conditions</div>
+                    <div class="terms-text">${escapeHTML($("termsInput").value || "—")}</div>
+                </div>
+
+                <div class="bottom-card">
+                    <div class="bottom-title">Bank Details</div>
+                    <div class="bank-details">
+                        <div><strong>A/C Holder:</strong> ${escapeHTML(COMPANY.bank.holder)}</div>
+                        <div><strong>Bank:</strong> ${escapeHTML(COMPANY.bank.name)}</div>
+                        <div><strong>A/C No:</strong> ${escapeHTML(COMPANY.bank.account)}</div>
+                        <div><strong>Branch:</strong> ${escapeHTML(COMPANY.bank.branch)}</div>
+                        <div><strong>IFSC:</strong> ${escapeHTML(COMPANY.bank.ifsc)}</div>
+                    </div>
+
+                    <div class="payment-row">
+                        <img src="QR.jpeg" alt="Payment QR Code">
+                        <div class="payment-text">
+                            <strong>SCAN TO PAY</strong>
+                            <div>Scan the QR code for payment.</div>
+                            <div>Please verify details before transferring.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-card signature-card">
+                    <div class="for-company">For SMB TRADERS</div>
+                    <div class="sign-box">
+                        <img src="SIGN.png" alt="Signature and Stamp">
+                    </div>
+                    <div class="sign-label">Authorized Signatory</div>
+                </div>
+
+            </div>
+
+            <div class="invoice-footer">
+                This is a computer-generated document issued by SMB TRADERS.
+            </div>
+
+        </div>
+    `;
+}
+
+/* ================================================
+   CREATE A4 PAGES
+================================================ */
+
+function generatePreview() {
+    if (!$("partyName").value.trim()) {
+        alert("Please enter the customer / party name.");
+        $("partyName").focus();
+        return;
+    }
+
+    const {items,totals} = calculateTotals();
+
+    const validItems = items.filter(item => item.description || item.qty || item.rate);
+
+    if (validItems.length === 0) {
+        alert("Please add at least one product.");
+        return;
+    }
+
+    const pages = [];
+    for (let i = 0; i < validItems.length; i += ITEMS_PER_PAGE) {
+        pages.push(validItems.slice(i, i + ITEMS_PER_PAGE));
+    }
+
+    const totalPages = pages.length;
+
+    $("invoicePages").innerHTML = pages.map((pageItems,pageIndex) => {
+        const isFirstPage = pageIndex === 0;
+        const isLastPage = pageIndex === totalPages - 1;
+        const startIndex = pageIndex * ITEMS_PER_PAGE;
+
+        return `
+            <article class="invoice-page">
+
+                ${companyHeaderHTML()}
+
+                ${isFirstPage
+                    ? documentDetailsHTML()
+                    : `
+                        <div class="document-title">${escapeHTML($("documentType").value)}</div>
+                        <div class="document-subtitle">
+                            ${escapeHTML($("documentNumber").value || "Document")}
+                            &nbsp; | &nbsp; Continued
+                        </div>
+                    `
+                }
+
+                ${productTableHTML(pageItems,startIndex)}
+
+                <div class="page-item-count">
+                    Page ${pageIndex + 1} of ${totalPages}
+                    &nbsp; | &nbsp; ${pageItems.length} product(s) on this page
+                </div>
+
+                ${isLastPage
+                    ? finalSectionHTML(totals)
+                    : `<div class="invoice-footer">Continued on next page</div>`
+                }
+
+            </article>
+        `;
+    }).join("");
+
+    $("editorScreen").classList.remove("active");
+    $("previewScreen").classList.add("active");
+
+    fitPreview();
+    window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* Scale the fixed A4 page down on small screens (screen only; print is always 100%) */
+function fitPreview() {
+    const box = $("invoicePages");
+    box.style.zoom = 1;
+    const available = $("previewScreen").clientWidth - 4;
+    const pageWidth = 198 * 96 / 25.4; // 198mm in px
+    box.style.zoom = Math.min(1, available / pageWidth);
+}
+
+window.addEventListener("resize", () => {
+    if ($("previewScreen").classList.contains("active")) fitPreview();
+});
+
+function backToEditor() {
+    $("previewScreen").classList.remove("active");
+    $("editorScreen").classList.add("active");
+    window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ================================================
+   RESET FORM
+================================================ */
+
+function resetForm() {
+    if (!confirm("Are you sure you want to reset this document?")) return;
+
+    ["documentNumber","placeOfSupply","partyName","orderBy","partyGSTIN",
+     "partyState","partyStateCode","partyPhone","partyEmail","partyAddress"
+    ].forEach(id => $(id).value = "");
+
+    $("documentType").value = "QUOTATION";
+    $("gstMode").value = "split";
+
+    $("termsInput").value =
+`1. Goods once sold will not be taken back.
+2. Payment should be made as per agreed terms.
+3. Prices are subject to applicable taxes.
+4. Delivery will be as mutually agreed.
+5. Subject to Bangalore jurisdiction.`;
+
+    $("itemEditorBody").innerHTML = "";
+    itemCounter = 0;
+
+    addItem();
+    setTodayDate();
+}
+
+/* ================================================
+   DEFAULT DATE AND INITIALIZE
+================================================ */
+
+function setTodayDate() {
+    const now = new Date();
+    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+        .toISOString().split("T")[0];
+    $("documentDate").value = localDate;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    setTodayDate();
+    addItem();
+    $("gstMode").addEventListener("change", calculateTotals);
+});
+</script>
+
+</body>
+</html>
